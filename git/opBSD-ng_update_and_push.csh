@@ -34,11 +34,11 @@ set OHEAD=`git branch | awk '/\*/{print $2}'`
 
 git stash
 
-(git fetch origin) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
-(git fetch freebsd) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
+(git fetch --progress origin) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
+(git fetch --progress freebsd) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
 # pushing the freshly fetched FreeBSD commit notes to hardenedbsd repo
 # these contains the svn revision ids
-(git push --atomic origin refs/notes/commits) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
+(git push --atomic --progress origin refs/notes/commits) |& ${TEE_CMD} ${LOGS}/freebsd-fetch-${DATE}.log
 
 foreach line ( ${BRANCHES} )
 	set err=0
@@ -92,9 +92,17 @@ foreach line ( ${BRANCHES} )
 
 	echo "==== update to latest origin ====" |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
 	# pull in latest changes from main repo
-	(git pull) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
-	if ( $? != 0 ) then
-		echo "ERROR: git pull failed, try to recover" |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+	if ( ${rebase} == 1 ) then
+		(git pull --progress --ff-only) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		set ret=$?
+	else
+		(git pull --progress) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		set ret=$?
+	endif
+	if ( ${ret} != 0 ) then
+		echo "ERROR: git pull failed, try to recover" |& \
+			${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		( git merge --abort ) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
 		( git reset --hard ) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
 	endif
 
@@ -145,14 +153,16 @@ foreach line ( ${BRANCHES} )
 
 	if ( ${rebase} != 0 ) then
 		# force update remote
-		(git push --force-with-lease --atomic origin ${branch}) |& \
+		(git push --progress --force-with-lease --atomic origin ${branch}) |& \
 			${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		set ret=$?
 	else
 		# update remote
-		(git push --atomic origin ${branch}) |& \
+		(git push --progress --atomic origin ${branch}) |& \
 			${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		set ret=$?
 	endif
-	if ( $? != 0 ) then
+	if ( ${ret} != 0 ) then
 		set _mail_subject_prefix="[PUSH]"
 		set err=1
 		goto handle_err
