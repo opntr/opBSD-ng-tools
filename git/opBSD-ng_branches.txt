@@ -1,0 +1,5 @@
+MERGE:freebsd/11-stable/master:freebsd/stable/11
+REBASE:opbsd/11-stable/master:freebsd/11-stable/master
+MERGE:freebsd/10-stable/master:freebsd/stable/10
+REBASE:opbsd/10-stable/master:freebsd/10-stable/master
+MERGE:freebsd/current/master:freebsd/master
