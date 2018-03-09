@@ -63,7 +63,7 @@ foreach line ( ${BRANCHES} )
 
 	set remote_branches=`echo ${line} | cut -d ':' -f 3 | tr '+' ' '`
 	set branch=`echo ${line} | cut -d ':' -f 2`
-	set _branch=`echo ${branch} | tr '/' ':'`
+	set _branch=`echo ${branch} | tr '/' '%'`
 
 	echo "==== BEGIN: ${branch} ====" |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
 
@@ -156,6 +156,13 @@ foreach line ( ${BRANCHES} )
 		(git push --progress --force-with-lease --atomic origin ${branch}) |& \
 			${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
 		set ret=$?
+		if ( ${ret} == 0 ) then
+			# create a tag
+			(git tag ${_branch}-${DATE}) |& \
+				${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+			(git push --progress --tags) |& \
+				${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		endif
 	else
 		# update remote
 		(git push --progress --atomic origin ${branch}) |& \
