@@ -102,8 +102,7 @@ foreach line ( ${BRANCHES} )
 	if ( ${ret} != 0 ) then
 		echo "ERROR: git pull failed, try to recover" |& \
 			${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
-		( git merge --abort ) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
-		( git reset --hard ) |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
+		goto handle_err
 	endif
 
 	echo "==== ${action_string} branches ====" |& ${TEE_CMD} ${LOGS}/${_branch}-${DATE}.log
