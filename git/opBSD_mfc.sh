@@ -38,12 +38,19 @@ do
 		format_string="format:opBSD MFC: %s%n%n%b%nAuthor: %an <%ae>%nOriginal-commit-date: %aD"
 	fi
 
-	git cherry-pick -x ${i}
-	case $? in
+	cmd_output=$(git cherry-pick -x ${i} 2>&1)
+	cmd_ret=$?
+	echo "${cmd_output}"
+	case ${cmd_ret} in
+	0)
+		_skip="no"
+		;;
+	1)
+		echo "${cmd_output}" | grep -q 'allow-empty'
+		cmd_ret=$?
+
+		case ${cmd_ret} in
 		0)
-			_skip="no"
-			;;
-		1)
 			# Ignore empty commits
 			git reset
 			_skip="YES"
@@ -52,10 +59,20 @@ do
 			# Merge conflict or other error
 			echo "Dropping into recovery shell."
 			echo "Fix the issue, and press ^D to continue."
+			git branch | awk '/\*/{print "current branch: "; print}'
 			env PS1="git cherry-pick error> " sh
 			echo
 			read -p "do you want to skip the current patch (YES/no): " _skip
 			;;
+		esac
+		;;
+	*)
+		# Other error
+		echo "Dropping into recovery shell."
+		env PS1="unknown git error> " sh
+		echo
+		read -p "do you want to skip the current patch (YES/no): " _skip
+		;;
 	esac
 
 	if [ "${_skip}" = "no" ]
