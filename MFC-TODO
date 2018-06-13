@@ -1,0 +1,1 @@
+8222f5cb7cdf1ad98c5f281437e35ec2d5da0b96; r335068; Make UMA and malloc(9) return non-executable memory in most cases.
