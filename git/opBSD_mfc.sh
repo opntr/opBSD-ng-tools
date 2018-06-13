@@ -84,6 +84,12 @@ do
 		git show
 	else
 		echo "skipped ${i} commit ..."
+		git status
+		read -p "do you want to reset-hard the workspace (YES/no): " _reset
+		if [ "${_reset}" = "YES" ]
+		then
+			git reset --hard
+		fi
 	fi
 
 	unlink ${_commit_message}
